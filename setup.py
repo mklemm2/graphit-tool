@@ -1,11 +1,14 @@
 #!/usr/bin/env python2
+import os
+if os.environ.get('USER','') == 'vagrant':
+    del os.link
 
 import distutils.core
 
 name = 'graphit-tool'
 
 distutils.core.setup(name=name,
-    version='0.1',
+    version='0.1.1',
     author="Marcus Klemm",
     author_email="mklemm@arago.de",
     url="https://arago.co",

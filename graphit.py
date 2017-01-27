@@ -3,6 +3,7 @@ import requests
 import requests.auth
 import time
 import json
+import hashlib
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from lxml import etree as et
 from itertools import islice, chain
@@ -34,14 +35,16 @@ class GraphitSession(requests.Session):
 			r.raise_for_status()
 		except requests.exceptions.HTTPError as e:
 			raise GraphitError(self, r.status_code, e)
+		except requests.exceptions.ConnectionError as e:
+			raise GraphitError(self, 0, e)
 		return r.json()
 
 	def get(self, resource):
 		return self.request('GET', resource)
 	def update(self, resource, data):
 		return self.request('POST', resource, data=data)
-	def replace(self, resource, data):
-		return self.request('PUT', resource, data=data)
+	def replace(self, resource, data, params=None):
+		return self.request('PUT', resource, data=data, params=params)
 	def delete(self, resource):
 		return self.request('DELETE', resource)
 	def create(self, ogit_type, data):
@@ -74,6 +77,8 @@ class WSO2AuthBase(requests.auth.AuthBase):
 				raise WSO2Error("Could not get an access token from WSO2, check client credentials!")
 			else:
 				raise WSO2Error(e.message)
+		except requests.exceptions.ConnectionError as e:
+			raise WSO2Error("Could not connect to WSO2: " + str(e))
 		self._token = Token(r.json())
 
 	def renew_token(self, *args, **kwargs):
@@ -284,18 +289,14 @@ class GraphitNode(object):
 	def __init__(self, session, data):
 		try:
 			self.ogit_id = data['ogit/_id']
+			self.ogit_type = data['ogit/_type']
 			self.data = data
 			self.session=session
 		except KeyError:
-			raise GraphitNodeError("Data invalid, ogit/_id is missing")
+			raise GraphitNodeError("Data invalid, ogit/_id is missing or ogit/_type missing")
 
 	def push(self):
-		q = ESQuery({'ogit/_id':self.ogit_id})
-		try:
-			next(self.session.query(q))
-			self.session.replace('/' + self.ogit_id, self.data)
-		except StopIteration:
-			self.session.create('ogit/Automation/MARSNode', self.data)
+		self.session.replace('/' + self.ogit_id, self.data, params={'createIfNotExists':'true', 'ogit/_type':self.ogit_type})
 
 	def delete(self):
 		try:
@@ -324,11 +325,17 @@ class MARSNode(GraphitNode):
 			if validator:
 				validator.validate(xml_doc)
 			ogit_id = xml_doc.attrib['ID']
+			ogit_name = xml_doc.attrib['NodeName']
+			ogit_automation_marsnodetype = xml_doc.attrib['NodeType']
+			ogitid = hashlib.md5(ogit_id).hexdigest()
 			data = {
 				'ogit/Automation/marsNodeFormalRepresentation':et.tostring(xml_doc),
 				'ogit/_owner': xml_doc.attrib['CustomerID'],
 				'ogit/_id': ogit_id,
-				'ogit/_type':'ogit/Automation/MARSNode'
+				'ogit/_type':'ogit/Automation/MARSNode',
+				'ogit/name':ogit_name,
+				'ogit/Automation/marsNodeType': ogit_automation_marsnodetype,
+				'ogit/id':ogitid
 			}
 		except XMLValidateError:
 			raise MARSNodeError("ERROR: {f} does not contain a valid MARS node".format(f=filename))
