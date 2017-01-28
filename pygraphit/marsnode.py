@@ -1,4 +1,5 @@
-from pygraphit import GraphitNode, XMLValidateError, prettify_xml
+from pygraphit import GraphitNode
+from pygraphit.xml import XMLValidateError, prettify_xml
 from lxml import etree as et
 import hashlib
 

@@ -19,9 +19,10 @@ import sys
 from gevent import monkey; monkey.patch_all()
 import codecs
 import gevent
-from pygraphit import GraphitSession, ESQuery, IDQuery, GraphitError, chunks, XMLValidator, GraphitNodeError
+from pygraphit import GraphitSession, ESQuery, IDQuery, GraphitError, chunks, GraphitNodeError
 from pygraphit.marsnode import MARSNode, MARSNodeError
 from pygraphit.wso2 import WSO2Error, WSO2AuthClientCredentials
+from pygraphit.xml import XMLValidator
 from docopt import docopt
 from ConfigParser import ConfigParser
 from requests.structures import CaseInsensitiveDict
