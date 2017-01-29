@@ -2,14 +2,9 @@ import gevent
 import requests
 import requests.auth
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from itertools import islice, chain
 
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-def chunks(iterable, size=10):
-	iterator = iter(iterable)
-	for first in iterator: yield chain([first], islice(iterator, size - 1))
 
 class ESQuery(object):
 	def __init__(self, conditions={}):
