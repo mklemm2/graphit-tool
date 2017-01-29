@@ -1,7 +1,11 @@
 import json
 from urllib import quote_plus
 import requests
-from pygraphit import QueryResult
+import pygraphit.query
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 class GraphitSession(requests.Session):
 
@@ -40,7 +44,7 @@ class GraphitSession(requests.Session):
 			'POST', '/new/' + quote_plus(ogit_type), data=data)
 	def query(self, query, limit=-1,
 			   offset=0, fields=None, concurrent=10, chunksize=100):
-		return QueryResult(self, query,
+		return pygraphit.query.QueryResult(self, query,
 					 limit=limit, offset=offset, fields=fields,
 					 concurrent=concurrent, chunksize=chunksize)
 

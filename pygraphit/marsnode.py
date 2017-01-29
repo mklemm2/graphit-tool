@@ -1,9 +1,9 @@
-from pygraphit import GraphitNode
-from pygraphit.xml import XMLValidateError, prettify_xml
+import pygraphit.node
+import pygraphit.xml
 from lxml import etree as et
 import hashlib
 
-class MARSNode(GraphitNode):
+class MARSNode(pygraphit.node.GraphitNode):
 	@classmethod
 	def from_xmlfile(cls, session, filename, validator=None):
 		try:
@@ -23,7 +23,7 @@ class MARSNode(GraphitNode):
 				'ogit/Automation/marsNodeType': ogit_automation_marsnodetype,
 				'ogit/id':ogitid
 			}
-		except XMLValidateError:
+		except pygraphit.xml.XMLValidateError:
 			raise MARSNodeError("ERROR: {f} does not contain a valid MARS node".format(f=filename))
 		except et.XMLSyntaxError:
 			raise MARSNodeError("ERROR: {f} does not contain valid XML".format(f=filename))
@@ -31,7 +31,7 @@ class MARSNode(GraphitNode):
 
 	def print_node(self, stream):
 		try:
-			print >>stream, prettify_xml(self.data['ogit/Automation/marsNodeFormalRepresentation'])
+			print >>stream, pygraphit.xml.prettify_xml(self.data['ogit/Automation/marsNodeFormalRepresentation'])
 		except KeyError as e:
 			if 'error' in self.data:
 				raise MARSNodeError("ERROR: Node '{nd}' {err}".format(
